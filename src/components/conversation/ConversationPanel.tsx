@@ -25,6 +25,7 @@ export function ConversationPanel({
   const [draft, setDraft] = useState("")
   const [selected, setSelected] = useState<QuestionOption[]>([])
   const bottomRef = useRef<HTMLDivElement>(null)
+  const composerRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => setSelected([]), [question?.topic, question?.prompt])
   useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages, loading])
@@ -73,25 +74,35 @@ export function ConversationPanel({
 
         {question && !loading && !completed ? (
           <div className="answer-area">
-            {question.options.length ? (
-              <div className="option-grid">
-                {question.options.map((item) => {
-                  const active = selected.some((selectedItem) => selectedItem.id === item.id)
-                  return (
-                    <button
-                      key={item.id}
-                      className={active ? "option-button selected" : "option-button"}
-                      onClick={() => choose(item)}
-                    >
-                      <span>{active ? "✓" : "+"}</span>{item.label}
-                    </button>
-                  )
-                })}
-                <button className="option-button muted" onClick={() => onAnswer("我还不确定") }>
-                  <span>?</span>我还不确定
-                </button>
-              </div>
-            ) : null}
+            <div className="option-grid">
+              {question.options.map((item) => {
+                const active = selected.some((selectedItem) => selectedItem.id === item.id)
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    className={active ? "option-button selected" : "option-button"}
+                    onClick={() => choose(item)}
+                  >
+                    <span>{active ? "✓" : "+"}</span>{item.label}
+                  </button>
+                )
+              })}
+              <button
+                type="button"
+                className="option-button muted"
+                onClick={() => onAnswer("我不知道")}
+              >
+                <span>?</span>我不知道
+              </button>
+              <button
+                type="button"
+                className="option-button muted"
+                onClick={() => composerRef.current?.focus()}
+              >
+                <span>✎</span>其他，自己补充
+              </button>
+            </div>
             {question.type === "multi_select" && selected.length ? (
               <button className="confirm-options" onClick={() => onSelectOptions(selected)}>
                 确认选择（{selected.length}）
@@ -124,9 +135,10 @@ export function ConversationPanel({
         }}
       >
         <input
+          ref={composerRef}
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
-          placeholder={completed ? "需求已确认" : "也可以直接输入你的回答…"}
+          placeholder={completed ? "需求已确认" : "输入你的补充回答…"}
           disabled={loading || completed}
         />
         <button disabled={!draft.trim() || loading || completed} aria-label="发送">

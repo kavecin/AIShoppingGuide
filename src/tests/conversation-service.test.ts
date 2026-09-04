@@ -9,6 +9,57 @@ import type {
 } from "@/domain/need-understanding/types"
 
 describe("gift dialogue", () => {
+  it("extracts a teacher as the target instead of asking who the gift is for", async () => {
+    const response = await processConversationTurn(
+      {
+        state: createInitialState("teacher-test"),
+        recentMessages: [],
+        event: {
+          type: "initial_message",
+          text: "我想给教师节的老师购买礼物",
+        },
+      },
+      new MockModelProvider(),
+    )
+
+    expect(response.publicCard.target).toMatchObject({
+      label: "老师",
+      relationship: "老师",
+      identity: "教师节赠礼对象",
+    })
+    expect(response.state.roles.recipientIds).toEqual(["target-1"])
+    expect(response.question?.topic).not.toBe("target_identity")
+    expect(response.question?.topic).toBe("role_assignment")
+  })
+
+  it("uses an open input only when the initial message has no identifiable target", async () => {
+    const response = await processConversationTurn(
+      {
+        state: createInitialState("unknown-target-test"),
+        recentMessages: [],
+        event: { type: "initial_message", text: "我想买一份合适的礼物" },
+      },
+      new MockModelProvider(),
+    )
+
+    expect(response.question).toMatchObject({
+      topic: "target_identity",
+      type: "free_text",
+      options: [],
+    })
+
+    const unknown = await processConversationTurn(
+      {
+        state: response.state,
+        recentMessages: [],
+        event: { type: "answer", text: "我不知道" },
+      },
+      new MockModelProvider(),
+    )
+    expect(unknown.state.actors).toHaveLength(1)
+    expect(unknown.question?.topic).toBe("relationship")
+  })
+
   it("forms an editable card after three focused clarification questions", async () => {
     const model = new MockModelProvider()
     let state = createInitialState("dialogue-test")

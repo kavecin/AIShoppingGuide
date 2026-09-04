@@ -15,6 +15,9 @@ export const NEED_UNDERSTANDING_INSTRUCTIONS = `
 7. 认知补全优先询问行为、过去事件、能力和排除项。
 8. 没有高价值问题或信息已足够时，nextAction 返回 review。
 9. 只返回结构化结果，不输出分析过程。
+10. 优先从用户原话中抽取购买对象、关系和角色。老师、导师、客户、邻居等开放角色与家人、朋友同等有效，不得只按固定关系词表识别。
+11. 当原话已经明确“给谁买、送给谁、由谁使用”时，直接更新 actors 与 roles，不再询问 target_identity；只有没有足够证据确定目标者时才允许提出该问题。
+12. 问题选项必须根据当前语境动态生成，不使用“自己/家人/朋友”一类固定枚举来替代开放输入。界面会额外提供“不知道”和自由补充入口。
 `.trim()
 
 export const buildModelInput = (input: ModelTurnInput) =>

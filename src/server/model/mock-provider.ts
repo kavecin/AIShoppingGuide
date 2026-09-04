@@ -97,8 +97,19 @@ const relationshipFromText = (text: string) => {
   if (/伴侣|爱人|丈夫|妻子|男朋友|女朋友/.test(text)) {
     return { label: "伴侣", relationship: "伴侣" }
   }
+  if (/老师|教师|导师/.test(text)) return { label: "老师", relationship: "老师" }
   if (/朋友/.test(text)) return { label: "朋友", relationship: "朋友" }
   if (/同事/.test(text)) return { label: "同事", relationship: "同事" }
+  if (/客户|顾客/.test(text)) return { label: "客户", relationship: "客户" }
+  if (/邻居/.test(text)) return { label: "邻居", relationship: "邻居" }
+
+  const explicitTarget = text.match(
+    /给(?:我的|我们(?:的)?)?([^，。！？]{1,12}?)(?:买|购买|准备|挑选|选一|送)/,
+  )?.[1]
+  const label = explicitTarget?.replace(/^(?:这次|一位|一个)/, "").trim()
+  if (label && !/^(?:人|别人|某人|谁)$/.test(label)) {
+    return { label, relationship: label }
+  }
   return null
 }
 
@@ -185,7 +196,11 @@ const initialTurn = (input: ModelTurnInput): ModelTurnResult => {
       id: "target-1",
       label: relation.label,
       relationshipToConsumer: relation.relationship,
-      identitySummary: /刚退休|退休/.test(text) ? "刚退休" : null,
+      identitySummary: /刚退休|退休/.test(text)
+        ? "刚退休"
+        : /教师节/.test(text)
+          ? "教师节赠礼对象"
+          : null,
     })
     patch.roleAssignments = {
       buyerIds: ["consumer"],
@@ -194,7 +209,7 @@ const initialTurn = (input: ModelTurnInput): ModelTurnResult => {
       recipientIds: ["target-1"],
     }
     patch.purchaseGoal = {
-      value: `为${relation.label}梳理这次购买需求`,
+      value: text,
       status: "confirmed",
       source: "user_explicit",
       updatedAtTurn: turn,
@@ -219,13 +234,9 @@ const initialTurn = (input: ModelTurnInput): ModelTurnResult => {
 
   const question = candidate(
     "target_identity",
-    "这次主要是给谁购买或使用？",
-    "single_select",
-    [
-      option("self", "我自己"),
-      option("family", "家人"),
-      option("friend", "朋友或同事"),
-    ],
+    "我还没能确定购买对象。这次主要是给谁购买或使用？",
+    "free_text",
+    [],
     ["usage_context"],
   )
   patch.purchaseGoal = {
@@ -283,6 +294,22 @@ const followUpTurn = (input: ModelTurnInput): ModelTurnResult => {
   }
 
   if (lastTopic === "target_identity") {
+    if (isUnknownReply(text)) {
+      const question = candidate(
+        "relationship",
+        "没关系。你可以先说说这次购买发生在什么关系或场景里吗？",
+        "free_text",
+        [],
+        ["usage_context", "relationship_expression"],
+        2,
+      )
+      return {
+        statePatch: patch,
+        assistantMessage: question.question,
+        nextAction: "ask",
+        questionCandidates: [question],
+      }
+    }
     const selfUse = /自己/.test(text)
     if (selfUse) {
       patch.roleAssignments = {
@@ -308,6 +335,38 @@ const followUpTurn = (input: ModelTurnInput): ModelTurnResult => {
     const question = candidate(
       selfUse ? "usage_context" : "role_assignment",
       selfUse ? "这次主要会在什么情境下使用？" : "主要由对方自己使用吗？",
+      "free_text",
+      [],
+      ["usage_context"],
+    )
+    return {
+      statePatch: patch,
+      assistantMessage: question.question,
+      nextAction: "ask",
+      questionCandidates: [question],
+    }
+  }
+
+  if (lastTopic === "relationship") {
+    const relation = relationshipFromText(text)
+    if (relation) {
+      patch.actorUpserts.push({
+        id: "target-1",
+        label: relation.label,
+        relationshipToConsumer: relation.relationship,
+        identitySummary: null,
+      })
+      patch.roleAssignments = {
+        buyerIds: ["consumer"],
+        decisionMakerIds: ["consumer"],
+        recipientIds: ["target-1"],
+      }
+    }
+    const question = candidate(
+      "role_assignment",
+      relation
+        ? `这件东西主要由${relation.label}自己使用吗？`
+        : "这件东西主要由你自己使用，还是会交给其他人？",
       "free_text",
       [],
       ["usage_context"],
