@@ -29,3 +29,4 @@
 - [产品假设与阶段决策](docs/PRODUCT_HYPOTHESES_AND_DECISIONS.md)
 - [MVP 产品与体验设计](docs/MVP_PRODUCT_DESIGN.md)
 - [AI 需求理解初步原型设计](docs/AI_NEED_UNDERSTANDING_PROTOTYPE.md)
+- [AI 需求理解初步实现方案](docs/AI_NEED_UNDERSTANDING_IMPLEMENTATION.md)
