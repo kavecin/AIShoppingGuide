@@ -31,7 +31,7 @@ npm install
 npm run dev
 ```
 
-打开 `http://localhost:3000`。默认使用内置的确定性演示模型，无需 API Key。若要接入 OpenAI，请复制 `.env.example` 为 `.env.local`，将 `MODEL_PROVIDER` 改为 `openai`，并填写 `OPENAI_API_KEY` 与 `OPENAI_MODEL`。
+打开 `http://localhost:3107`。默认使用内置的确定性演示模型，无需 API Key。若要接入 OpenAI，请复制 `.env.example` 为 `.env.local`，将 `MODEL_PROVIDER` 改为 `openai`，并填写 `OPENAI_API_KEY` 与 `OPENAI_MODEL`。
 
 验证命令：
 
