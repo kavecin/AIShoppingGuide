@@ -21,3 +21,10 @@
 通过对话理解用户的场景、预算和偏好，给出结构化的购物建议：买什么、为什么买、怎么选、预算如何分配。
 
 本仓库用于该智能导购能力的研发。
+
+## 项目文档
+
+- [项目立项](PROJECT_INITIATION.md)
+- [产品研发流程](PRODUCT_DEVELOPMENT_PROCESS.md)
+- [产品假设与阶段决策](docs/PRODUCT_HYPOTHESES_AND_DECISIONS.md)
+- [MVP 产品与体验设计](docs/MVP_PRODUCT_DESIGN.md)
